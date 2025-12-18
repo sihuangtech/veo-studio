@@ -1,8 +1,8 @@
 import time
 from google import genai
 from google.genai import types
-from config import Config
-from utils import setup_logger
+from .config import Config
+from .utils import setup_logger
 
 logger = setup_logger("VeoClient")
 
@@ -17,7 +17,8 @@ class VeoClient:
                 os.environ["HTTP_PROXY"] = Config.HTTPS_PROXY
             
             self.client = genai.Client(api_key=Config.GOOGLE_API_KEY)
-            logger.info(f"Initialized VeoClient with model: {Config.VEO_MODEL_NAME}")
+            current_model = Config.get_current_model()
+            logger.info(f"Initialized VeoClient with model: {current_model}")
         except Exception as e:
             logger.error(f"Failed to initialize VeoClient: {e}")
             raise
@@ -59,8 +60,9 @@ class VeoClient:
             config = types.GenerateVideosConfig(**config_params)
             
             # Initiate generation
+            current_model = Config.get_current_model() # Get latest selection
             operation = self.client.models.generate_videos(
-                model=Config.VEO_MODEL_NAME,
+                model=current_model,
                 prompt=prompt,
                 config=config
             )

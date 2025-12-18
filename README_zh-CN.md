@@ -18,15 +18,51 @@
 
 ## 环境要求
 
-- Python 3.9 或更高版本
+- Python 3.10 或更高版本
 - 启用了 Vertex AI / Gemini API 的 Google Cloud 项目
 - Google Cloud API Key
 
 ## 安装指南
 
-1.  **克隆仓库** (或下载源代码):
+### 方法一：使用 uv（推荐）
+
+[uv](https://github.com/astral-sh/uv) 是一个快速的 Python 包安装器和解析器。本项目已配置使用清华大学镜像源，在中国大陆可以获得更快的下载速度。
+
+1.  **安装 uv**（如果尚未安装）:
     ```bash
-    git clone <your-repo-url>
+    # Windows (PowerShell)
+    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    
+    # macOS/Linux
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+2.  **克隆仓库**（或下载源代码）:
+    ```bash
+    git clone https://github.com/sihuangtech/veo-studio.git
+    cd veo-studio
+    ```
+
+3.  **创建虚拟环境并安装依赖**:
+    ```bash
+    # uv 会自动创建虚拟环境并安装依赖
+    uv sync
+    ```
+
+4.  **激活虚拟环境**:
+    ```bash
+    # Windows
+    .venv\Scripts\activate
+    
+    # macOS/Linux
+    source .venv/bin/activate
+    ```
+
+### 方法二：使用 pip（传统方式）
+
+1.  **克隆仓库**（或下载源代码）:
+    ```bash
+    git clone https://github.com/sihuangtech/veo-studio.git
     cd veo-studio
     ```
 
@@ -64,14 +100,10 @@ Google 提供了多种 Veo 视频生成模型，你可以在 `.env` 文件中通
 | 模型名称 | 版本 | 描述 |
 | :--- | :--- | :--- |
 | `veo-3.1-generate-preview` | Veo 3 | 2025年10月15日发布，生成 720p 或 1080p 分辨率视频，支持 24 或 30 fps。 |
-| `veo-3.1-generate-preview-001` | Veo 3 | Veo 3.1 的特定预览版本。 |
 | `veo-3.1-fast-generate-preview` | Veo 3 | 2025年10月15日发布，生成 720p 或 1080p 分辨率视频，支持 24 或 30 fps。优化了生成速度，适用于快速迭代。 |
-| `veo-3.1-fast-generate-preview-001` | Veo 3 | Veo 3.1 Fast 的特定预览版本。 |
-| `veo-3.0-generate-preview` | Veo 3 | 2025年5月发布。已于2025年11月停用，被 Veo 3.1 取代。 |
-| `veo-3.0-fast-generate-preview` | Veo 3 | 2025年5月发布。已于2025年11月停用，被 Veo 3.1 取代。 |
+| `veo-3.0-generate-001` | Veo 3 | 2025年5月发布。已于2025年11月停用，被 Veo 3.1 取代。 |
+| `veo-3.0-fast-generate-001` | Veo 3 | 2025年5月发布。已于2025年11月停用，被 Veo 3.1 取代。 |
 | `veo-2.0-generate-001` | Veo 2 | 2024年12月发布，生成 1080p 分辨率视频，支持 24 或 30 fps。 |
-| `veo-2.0-generate-preview` | Veo 2 | 2024年12月发布，Veo 2 的预览版本。 |
-| `veo-2.0-generate-preview-001` | Veo 2 | Veo 2 的特定预览版本。 |
 
 *注意：*
 - *所有模型生成的视频长度为 8 秒（部分早期 Veo 2 变体可能为 6 秒，但 API 统一返回整数时长）。*
@@ -84,7 +116,7 @@ Google 提供了多种 Veo 视频生成模型，你可以在 `.env` 文件中通
 运行图形用户界面:
 
 ```bash
-python3 gui.py
+python3 run_gui.py
 ```
 
 1.  在 **Prompt** (提示词) 输入框中输入你的视频描述。
@@ -98,13 +130,16 @@ python3 gui.py
 
 ## 项目结构
 
-- `gui.py`: GUI 应用程序的主入口 (PySide6)。
-- `veo_client.py`: 与 Google GenAI API 交互的核心逻辑。
-- `main.py`: (可选) 命令行接口替代方案。
-- `config.py`: 配置管理和验证。
-- `utils.py`: 通用工具函数 (日志记录等)。
-- `.env`: API 密钥配置文件 (不提交到版本控制)。
-- `requirements.txt`: Python 依赖列表。
+- `run_gui.py`: GUI 应用程序启动脚本。
+- `main.py`: 命令行接口入口。
+- `app/`: 源代码目录。
+    - `gui.py`: GUI 主窗口实现。
+    - `veo_client.py`: 与 Google GenAI API 交互的核心逻辑。
+    - `config.py`: 配置管理。
+    - `utils.py`: 通用工具函数。
+- `.env`: API 密钥配置文件。
+- `pyproject.toml`: 项目元数据和依赖配置 (用于 uv)。
+- `uv.toml`: UV 配置文件，包含清华镜像源设置。
 
 ## 故障排除
 
@@ -115,3 +150,11 @@ python3 gui.py
 ## 开源协议
 
 本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
+
+## 联系方式
+
+本项目由 **彩旗工作室 (SK Studio)** 维护。
+
+- **官网**: [www.skstudio.cn](https://www.skstudio.cn)
+- **邮箱**: [contact@skstudio.cn](mailto:contact@skstudio.cn)
+- **彩旗开源交流群**: [点击加入群聊](https://qm.qq.com/q/KUCcyyYtyi)

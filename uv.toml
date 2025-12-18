@@ -1,0 +1,8 @@
+# UV 配置文件 - 使用清华大学镜像源
+# UV Configuration - Using Tsinghua University Mirror
+
+[[index]]
+# 使用清华大学 PyPI 镜像源作为默认源
+# Use Tsinghua University PyPI mirror as default index
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+default = true

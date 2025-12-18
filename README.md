@@ -18,15 +18,51 @@ A modern desktop GUI application for generating videos using Google's Veo 3.1 mo
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - A Google Cloud Project with Vertex AI / Gemini API enabled
 - A Google Cloud API Key
 
 ## Installation
 
+### Method 1: Using uv (Recommended)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver. This project is configured to use Tsinghua University mirror for faster downloads in China.
+
+1.  **Install uv** (if not already installed):
+    ```bash
+    # On Windows (PowerShell)
+    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    
+    # On macOS/Linux
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+2.  **Clone the repository** (or download the source code):
+    ```bash
+    git clone https://github.com/sihuangtech/veo-studio.git
+    cd veo-studio
+    ```
+
+3.  **Create virtual environment and install dependencies**:
+    ```bash
+    # uv will automatically create a virtual environment and install dependencies
+    uv sync
+    ```
+
+4.  **Activate the virtual environment**:
+    ```bash
+    # On Windows
+    .venv\Scripts\activate
+    
+    # On macOS/Linux
+    source .venv/bin/activate
+    ```
+
+### Method 2: Using pip (Traditional)
+
 1.  **Clone the repository** (or download the source code):
     ```bash
-    git clone <your-repo-url>
+    git clone https://github.com/sihuangtech/veo-studio.git
     cd veo-studio
     ```
 
@@ -64,14 +100,10 @@ Google provides multiple Veo video generation models. You can switch between the
 | Model Name | Version | Description |
 | :--- | :--- | :--- |
 | `veo-3.1-generate-preview` | Veo 3 | Released on Oct 15, 2025. Generates 720p or 1080p video at 24 or 30 fps. |
-| `veo-3.1-generate-preview-001` | Veo 3 | Specific preview version of Veo 3.1. |
 | `veo-3.1-fast-generate-preview` | Veo 3 | Released on Oct 15, 2025. Generates 720p or 1080p video at 24 or 30 fps. Optimized for speed and rapid iteration. |
-| `veo-3.1-fast-generate-preview-001` | Veo 3 | Specific preview version of Veo 3.1 Fast. |
-| `veo-3.0-generate-preview` | Veo 3 | Released in May 2025. Shut down in Nov 2025, replaced by Veo 3.1. |
-| `veo-3.0-fast-generate-preview` | Veo 3 | Released in May 2025. Shut down in Nov 2025, replaced by Veo 3.1. |
+| `veo-3.0-generate-001` | Veo 3 | Released in May 2025. Shut down in Nov 2025, replaced by Veo 3.1. |
+| `veo-3.0-fast-generate-001` | Veo 3 | Released in May 2025. Shut down in Nov 2025, replaced by Veo 3.1. |
 | `veo-2.0-generate-001` | Veo 2 | Released in Dec 2024. Generates 1080p video at 24 or 30 fps. |
-| `veo-2.0-generate-preview` | Veo 2 | Released in Dec 2024. Preview version of Veo 2. |
-| `veo-2.0-generate-preview-001` | Veo 2 | Specific preview version of Veo 2. |
 
 *Notes:*
 - *All models generate 8-second videos (API returns integer duration).*
@@ -84,7 +116,7 @@ Google provides multiple Veo video generation models. You can switch between the
 Run the graphical user interface:
 
 ```bash
-python3 gui.py
+python3 run_gui.py
 ```
 
 1.  Enter your video description in the **Prompt** box.
@@ -98,13 +130,16 @@ python3 gui.py
 
 ## Project Structure
 
-- `gui.py`: Main entry point for the GUI application (PySide6).
-- `veo_client.py`: Core logic for interacting with the Google GenAI API.
-- `main.py`: (Optional) Command-line interface alternative.
-- `config.py`: Configuration management and validation.
-- `utils.py`: Utility functions (logging, etc.).
-- `.env`: Configuration file for API keys (not committed to version control).
-- `requirements.txt`: Python dependency list.
+- `run_gui.py`: Launch script for the GUI application.
+- `main.py`: Command-line interface entry point.
+- `app/`: Source code directory.
+    - `gui.py`: Main GUI window implementation.
+    - `veo_client.py`: Core logic for interacting with the Google GenAI API.
+    - `config.py`: Configuration management.
+    - `utils.py`: Utility functions.
+- `.env`: Configuration file for API keys.
+- `pyproject.toml`: Project metadata and dependencies (for uv).
+- `uv.toml`: UV configuration with Tsinghua mirror settings.
 
 ## Troubleshooting
 
@@ -115,3 +150,11 @@ python3 gui.py
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+Maintained by **SK Studio**.
+
+- **Website**: [www.skstudio.cn](https://www.skstudio.cn)
+- **Email**: [contact@skstudio.cn](mailto:contact@skstudio.cn)
+- **QQ Group**: [Join Chat](https://qm.qq.com/q/KUCcyyYtyi)

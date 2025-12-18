@@ -1,0 +1,30 @@
+{
+    "current_model": "veo-3.1-generate-preview",
+    "models": [
+        {
+            "id": "veo-3.1-generate-preview",
+            "name": "Veo 3.1 (Preview)",
+            "description": "Released Oct 15, 2025. 720p/1080p, 24/30fps. High fidelity."
+        },
+        {
+            "id": "veo-3.1-fast-generate-preview",
+            "name": "Veo 3.1 Fast (Preview)",
+            "description": "Released Oct 15, 2025. Optimized for speed and rapid iteration."
+        },
+        {
+            "id": "veo-3.0-generate-001",
+            "name": "Veo 3.0",
+            "description": "Released May 2025. Shut down in Nov 2025."
+        },
+        {
+            "id": "veo-3.0-fast-generate-001",
+            "name": "Veo 3.0 Fast",
+            "description": "Released May 2025. Shut down in Nov 2025."
+        },
+        {
+            "id": "veo-2.0-generate-001",
+            "name": "Veo 2.0",
+            "description": "Released Dec 2024. 1080p, 24/30fps."
+        }
+    ]
+}

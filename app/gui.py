@@ -7,8 +7,8 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 
-from config import Config
-from veo_client import VeoClient
+from .config import Config
+from .veo_client import VeoClient
 
 # Configure Logging to emit signal to GUI
 class SignallingLogHandler(logging.Handler):
@@ -94,6 +94,16 @@ class VeoStudioWindow(QMainWindow):
         prompt_group.setLayout(prompt_layout)
         left_layout.addWidget(prompt_group, 2)
         
+        # Model Selection Group
+        model_group = QGroupBox("Model Selection")
+        model_layout = QVBoxLayout()
+        self.model_combo = QComboBox()
+        self.load_models()
+        self.model_combo.currentIndexChanged.connect(self.on_model_changed)
+        model_layout.addWidget(self.model_combo)
+        model_group.setLayout(model_layout)
+        left_layout.addWidget(model_group)
+        
         # Negative Prompt Group
         neg_prompt_group = QGroupBox("Negative Prompt")
         neg_prompt_layout = QVBoxLayout()
@@ -177,6 +187,32 @@ class VeoStudioWindow(QMainWindow):
         # Auto scroll to bottom
         scrollbar = self.log_browser.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+
+    def load_models(self):
+        """Load models from config into the combobox."""
+        models = Config.get_models()
+        current_model_id = Config.get_current_model()
+        
+        self.model_combo.clear()
+        for i, model in enumerate(models):
+            # Display Name (ID)
+            display_text = f"{model['name']} ({model['id']})"
+            self.model_combo.addItem(display_text, model['id'])
+            
+            # Set tooltip for description
+            self.model_combo.setItemData(i, model['description'], Qt.ItemDataRole.ToolTipRole)
+            
+            # Select if it's the current model
+            if model['id'] == current_model_id:
+                self.model_combo.setCurrentIndex(i)
+
+    def on_model_changed(self, index):
+        """Update config when model selection changes."""
+        if index >= 0:
+            model_id = self.model_combo.itemData(index) # itemData(index, Qt.UserRole) by default gets the second arg of addItem
+            # PySide6 addItem(text, userData) stores userData in UserRole
+            Config.set_current_model(model_id)
+            self.log_message(f"Selected Model: {model_id}")
 
     def start_generation(self):
         prompt = self.prompt_edit.toPlainText().strip()

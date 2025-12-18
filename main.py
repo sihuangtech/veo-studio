@@ -1,7 +1,7 @@
 import sys
-from config import Config
-from veo_client import VeoClient
-from utils import setup_logger
+from app.config import Config
+from app.veo_client import VeoClient
+from app.utils import setup_logger
 
 logger = setup_logger("Main")
 

@@ -10,6 +10,8 @@ env/
 
 # Environment Variables
 .env
+config.json
+!config.example.json
 
 # IDEs
 .idea/
