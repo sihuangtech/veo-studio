@@ -95,7 +95,11 @@
 
 ## 视频模型选择
 
-Google 提供了多种 Veo 视频生成模型，你可以在 `.env` 文件中通过修改 `VEO_MODEL_NAME` 来切换：
+Google 提供了多种 Veo 视频生成模型。**现在你可以在 GUI 界面中直接切换模型。**
+
+1.  在左侧面板找到 **Model Selection** (模型选择) 下拉框。
+2.  选择你想要使用的模型。
+3.  选择会自动保存到 `config.json` 文件中。
 
 | 模型名称 | 版本 | 描述 |
 | :--- | :--- | :--- |
@@ -119,7 +123,8 @@ Google 提供了多种 Veo 视频生成模型，你可以在 `.env` 文件中通
 python3 run_gui.py
 ```
 
-1.  在 **Prompt** (提示词) 输入框中输入你的视频描述。
+1.  从 **Model Selection** (模型选择) 下拉框中选择想要使用的模型。
+2.  在 **Prompt** (提示词) 输入框中输入你的视频描述。
 2.  (可选) 输入 **Negative Prompt** (负向提示词) 以指定想要避免的内容。
 3.  根据需要调整 **Aspect Ratio** (宽高比) 和 **Person Generation** (人物生成) 设置。
 4.  (可选) 勾选 **Use Seed** (使用种子) 并设置一个数字以生成可复现的结果。
@@ -137,6 +142,8 @@ python3 run_gui.py
     - `veo_client.py`: 与 Google GenAI API 交互的核心逻辑。
     - `config.py`: 配置管理。
     - `utils.py`: 通用工具函数。
+- `config.json`: 存储用户首选项 (例如选中的模型)。
+- `config.example.json`: 配置模板文件。
 - `.env`: API 密钥配置文件。
 - `pyproject.toml`: 项目元数据和依赖配置 (用于 uv)。
 - `uv.toml`: UV 配置文件，包含清华镜像源设置。

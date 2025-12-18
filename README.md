@@ -95,7 +95,11 @@ A modern desktop GUI application for generating videos using Google's Veo 3.1 mo
 
 ## Video Model Selection
 
-Google provides multiple Veo video generation models. You can switch between them by modifying `VEO_MODEL_NAME` in your `.env` file:
+Google provides multiple Veo video generation models. **You can now switch between them directly in the GUI.**
+
+1.  Locate the **Model Selection** dropdown in the left panel.
+2.  Select your desired model.
+3.  The selection is automatically saved to `config.json`.
 
 | Model Name | Version | Description |
 | :--- | :--- | :--- |
@@ -119,7 +123,8 @@ Run the graphical user interface:
 python3 run_gui.py
 ```
 
-1.  Enter your video description in the **Prompt** box.
+1.  Select the desired model from the **Model Selection** dropdown.
+2.  Enter your video description in the **Prompt** box.
 2.  (Optional) Enter a **Negative Prompt** to specify what to avoid.
 3.  Adjust **Aspect Ratio** and **Person Generation** settings as needed.
 4.  (Optional) Check **Use Seed** and set a number for reproducible generation.
@@ -137,6 +142,8 @@ python3 run_gui.py
     - `veo_client.py`: Core logic for interacting with the Google GenAI API.
     - `config.py`: Configuration management.
     - `utils.py`: Utility functions.
+- `config.json`: Stores user preferences (e.g., selected model).
+- `config.example.json`: Template for configuration.
 - `.env`: Configuration file for API keys.
 - `pyproject.toml`: Project metadata and dependencies (for uv).
 - `uv.toml`: UV configuration with Tsinghua mirror settings.
