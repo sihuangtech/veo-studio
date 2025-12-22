@@ -9,6 +9,7 @@ CONFIG_FILE = "config.json"
 class Config:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     HTTPS_PROXY = os.getenv("HTTPS_PROXY")
+    GOOGLE_GENAI_BASE_URL = os.getenv("GOOGLE_GENAI_BASE_URL")
     
     # Defaults
     _config_data = {
@@ -59,3 +60,7 @@ class Config:
             raise ValueError("GOOGLE_API_KEY not found in .env file")
         if cls.GOOGLE_API_KEY == "your_api_key_here":
             raise ValueError("Please replace placeholder API key in .env with your actual key")
+        if cls.GOOGLE_GENAI_BASE_URL:
+            base_url = cls.GOOGLE_GENAI_BASE_URL.strip()
+            if not (base_url.startswith("http://") or base_url.startswith("https://")):
+                raise ValueError("GOOGLE_GENAI_BASE_URL must start with http:// or https://")

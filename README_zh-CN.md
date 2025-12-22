@@ -93,6 +93,12 @@
     HTTPS_PROXY=http://127.0.0.1:7890
     ```
 
+4.  **自定义 API 端点 (可选)**:
+    如果你使用了 API 网关 / 反向代理来访问 Google GenAI API，可以在 `.env` 文件中覆盖 SDK 的 base URL：
+    ```bash
+    GOOGLE_GENAI_BASE_URL=https://your-proxy.example.com
+    ```
+
 ## 视频模型选择
 
 Google 提供了多种 Veo 视频生成模型。**现在你可以在 GUI 界面中直接切换模型。**

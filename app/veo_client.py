@@ -15,8 +15,14 @@ class VeoClient:
                 import os
                 os.environ["HTTPS_PROXY"] = Config.HTTPS_PROXY
                 os.environ["HTTP_PROXY"] = Config.HTTPS_PROXY
-            
-            self.client = genai.Client(api_key=Config.GOOGLE_API_KEY)
+
+            client_kwargs = {"api_key": Config.GOOGLE_API_KEY}
+            if Config.GOOGLE_GENAI_BASE_URL:
+                base_url = Config.GOOGLE_GENAI_BASE_URL.strip()
+                logger.info(f"Using custom GenAI base URL: {base_url}")
+                client_kwargs["http_options"] = types.HttpOptions(base_url=base_url)
+
+            self.client = genai.Client(**client_kwargs)
             current_model = Config.get_current_model()
             logger.info(f"Initialized VeoClient with model: {current_model}")
         except Exception as e:

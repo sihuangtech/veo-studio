@@ -93,6 +93,12 @@ A modern desktop GUI application for generating videos using Google's Veo 3.1 mo
     HTTPS_PROXY=http://127.0.0.1:7890
     ```
 
+4.  **Custom API Endpoint (Optional)**:
+    If you are using an API gateway / reverse proxy to access the Google GenAI API, you can override the SDK base URL in your `.env` file:
+    ```bash
+    GOOGLE_GENAI_BASE_URL=https://your-proxy.example.com
+    ```
+
 ## Video Model Selection
 
 Google provides multiple Veo video generation models. **You can now switch between them directly in the GUI.**
