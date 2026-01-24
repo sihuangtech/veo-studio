@@ -1,6 +1,6 @@
 [project]
 name = "veo-studio"
-version = "1.1.0"
+version = "1.2.0"
 description = "A modern desktop GUI application for generating videos using Google's Veo 3.1 model"
 readme = "README.md"
 requires-python = ">=3.10"

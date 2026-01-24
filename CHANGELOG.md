@@ -5,11 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-01-24
+
+### Added
+- Reference video analysis feature for generating video prompts from existing videos
+- File upload state polling to ensure files are ready before processing
+- Project-specific temporary directory (`.temp`) for temporary files
 
 ### Changed
 - Renamed `run_gui.py` to `gui.py` for consistency
 - Removed `config.example.json` file
+
+### Documentation
+- Added Chinese and English changelog files
+- Updated project documentation
 
 ## [1.1.0] - 2025-12-22
 

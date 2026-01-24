@@ -81,6 +81,20 @@ class VeoClient:
 
             logger.info(f"Uploading reference video: {upload_path}")
             uploaded = self.client.files.upload(file=upload_path)
+            
+            logger.info(f"Waiting for file to be processed (current state: {uploaded.state})...")
+            max_wait = 120
+            wait_time = 0
+            while uploaded.state != "ACTIVE" and wait_time < max_wait:
+                time.sleep(2)
+                uploaded = self.client.files.get(name=uploaded.name)
+                logger.info(f"File state: {uploaded.state}")
+                wait_time += 2
+            
+            if uploaded.state != "ACTIVE":
+                raise RuntimeError(f"File processing timeout. Final state: {uploaded.state}")
+            
+            logger.info(f"File is ready (state: {uploaded.state})")
         finally:
             if temp_dir:
                 shutil.rmtree(temp_dir, ignore_errors=True)
