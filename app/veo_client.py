@@ -1,3 +1,8 @@
+import json
+import os
+import re
+import shutil
+import tempfile
 import time
 from google import genai
 from google.genai import types
@@ -12,7 +17,6 @@ class VeoClient:
             if Config.HTTPS_PROXY:
                 logger.info(f"Using proxy: {Config.HTTPS_PROXY}")
                 # Ensure it's set in os.environ for underlying libraries
-                import os
                 os.environ["HTTPS_PROXY"] = Config.HTTPS_PROXY
                 os.environ["HTTP_PROXY"] = Config.HTTPS_PROXY
 
@@ -28,6 +32,105 @@ class VeoClient:
         except Exception as e:
             logger.error(f"Failed to initialize VeoClient: {e}")
             raise
+
+    def _load_prompt_template(self, relative_path):
+        base_dir = os.path.dirname(__file__)
+        path = os.path.join(base_dir, relative_path)
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    def _extract_json(self, text):
+        if not text:
+            raise ValueError("Empty response")
+        text = text.strip()
+        if text.startswith("{") and text.endswith("}"):
+            return json.loads(text)
+
+        fenced_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL | re.IGNORECASE)
+        if fenced_match:
+            return json.loads(fenced_match.group(1))
+
+        obj_match = re.search(r"(\{.*\})", text, flags=re.DOTALL)
+        if obj_match:
+            return json.loads(obj_match.group(1))
+
+        raise ValueError("Failed to parse JSON from model response")
+
+    def analyze_reference_video(self, reference_video_path, user_prompt=None, prompt_language="zh"):
+        if not reference_video_path:
+            raise ValueError("reference_video_path is required")
+        if not os.path.exists(reference_video_path):
+            raise FileNotFoundError(reference_video_path)
+
+        upload_path = reference_video_path
+        temp_dir = None
+        try:
+            try:
+                upload_path.encode("ascii")
+            except UnicodeEncodeError:
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                project_temp_dir = os.path.join(base_dir, ".temp")
+                if not os.path.exists(project_temp_dir):
+                    os.makedirs(project_temp_dir)
+                temp_dir = tempfile.mkdtemp(prefix="veo_reference_", dir=project_temp_dir)
+                _, ext = os.path.splitext(reference_video_path)
+                if not ext:
+                    ext = ".mp4"
+                upload_path = os.path.join(temp_dir, f"reference_video_{int(time.time())}{ext}")
+                shutil.copy2(reference_video_path, upload_path)
+
+            logger.info(f"Uploading reference video: {upload_path}")
+            uploaded = self.client.files.upload(file=upload_path)
+        finally:
+            if temp_dir:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+        model = Config.GEMINI_TEXT_MODEL
+
+        if (prompt_language or "").lower().startswith("en"):
+            template_path = "prompts/reference_video_analysis_en.txt"
+        else:
+            template_path = "prompts/reference_video_analysis.txt"
+
+        template = self._load_prompt_template(template_path)
+        prompt = template.replace("{{user_prompt}}", user_prompt or "")
+
+        logger.info("Analyzing reference video and generating copywriting...")
+        response = self.client.models.generate_content(
+            model=model,
+            contents=[uploaded, prompt],
+        )
+        data = self._extract_json(getattr(response, "text", None))
+        return data
+
+    def generate_video_from_reference(
+        self,
+        reference_video_path,
+        user_prompt,
+        prompt_language="zh",
+        aspect_ratio="16:9",
+        person_generation="allow_adult",
+        negative_prompt=None,
+        seed=None,
+    ):
+        analysis = self.analyze_reference_video(reference_video_path, user_prompt=user_prompt, prompt_language=prompt_language)
+        veo_prompt = analysis.get("veo_prompt")
+        if not veo_prompt:
+            raise ValueError("Model response missing 'veo_prompt'")
+
+        final_prompt = veo_prompt
+        video_path = self.generate_video(
+            prompt=final_prompt,
+            aspect_ratio=aspect_ratio,
+            person_generation=person_generation,
+            negative_prompt=negative_prompt,
+            seed=seed,
+        )
+
+        return {
+            "video_path": video_path,
+            "analysis": analysis,
+            "final_prompt": final_prompt,
+        }
 
     def generate_video(self, prompt, aspect_ratio="16:9", person_generation="allow_adult", negative_prompt=None, seed=None):
         """
@@ -105,7 +208,6 @@ class VeoClient:
                 
                 # Ensure output directory exists
                 output_dir = "output"
-                import os
                 if not os.path.exists(output_dir):
                     os.makedirs(output_dir)
                     

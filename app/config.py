@@ -10,6 +10,7 @@ class Config:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     HTTPS_PROXY = os.getenv("HTTPS_PROXY")
     GOOGLE_GENAI_BASE_URL = os.getenv("GOOGLE_GENAI_BASE_URL")
+    GEMINI_TEXT_MODEL = os.getenv("GEMINI_TEXT_MODEL")
     
     # Defaults
     _config_data = {

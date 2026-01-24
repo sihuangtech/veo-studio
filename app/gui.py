@@ -3,7 +3,7 @@ import logging
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                                QHBoxLayout, QLabel, QTextEdit, QLineEdit, 
                                QComboBox, QPushButton, QProgressBar, QSpinBox, 
-                               QGroupBox, QTextBrowser, QMessageBox, QCheckBox)
+                               QGroupBox, QTextBrowser, QMessageBox, QCheckBox, QFileDialog)
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 
@@ -22,12 +22,14 @@ class SignallingLogHandler(logging.Handler):
 
 class GenerationWorker(QThread):
     log_signal = Signal(str)
-    finished_signal = Signal(str)
+    finished_signal = Signal(object)
     error_signal = Signal(str)
 
-    def __init__(self, prompt, aspect_ratio, person_generation, negative_prompt, seed):
+    def __init__(self, prompt, reference_video_path, prompt_language, aspect_ratio, person_generation, negative_prompt, seed):
         super().__init__()
         self.prompt = prompt
+        self.reference_video_path = reference_video_path
+        self.prompt_language = prompt_language
         self.aspect_ratio = aspect_ratio
         self.person_generation = person_generation
         self.negative_prompt = negative_prompt
@@ -45,18 +47,64 @@ class GenerationWorker(QThread):
         
         try:
             client = VeoClient()
-            result_path = client.generate_video(
-                prompt=self.prompt,
-                aspect_ratio=self.aspect_ratio,
-                person_generation=self.person_generation,
-                negative_prompt=self.negative_prompt,
-                seed=self.seed
-            )
-            
-            if result_path:
-                self.finished_signal.emit(result_path)
+            if self.reference_video_path:
+                result = client.generate_video_from_reference(
+                    reference_video_path=self.reference_video_path,
+                    user_prompt=self.prompt,
+                    prompt_language=self.prompt_language,
+                    aspect_ratio=self.aspect_ratio,
+                    person_generation=self.person_generation,
+                    negative_prompt=self.negative_prompt,
+                    seed=self.seed,
+                )
+                if result and result.get("video_path"):
+                    self.finished_signal.emit(result)
+                else:
+                    self.error_signal.emit("Generation completed but no file returned.")
             else:
-                self.error_signal.emit("Generation completed but no file returned.")
+                result_path = client.generate_video(
+                    prompt=self.prompt,
+                    aspect_ratio=self.aspect_ratio,
+                    person_generation=self.person_generation,
+                    negative_prompt=self.negative_prompt,
+                    seed=self.seed
+                )
+                if result_path:
+                    self.finished_signal.emit({"video_path": result_path})
+                else:
+                    self.error_signal.emit("Generation completed but no file returned.")
+        except Exception as e:
+            self.error_signal.emit(str(e))
+        finally:
+            logger.removeHandler(handler)
+
+class AnalysisWorker(QThread):
+    log_signal = Signal(str)
+    finished_signal = Signal(object)
+    error_signal = Signal(str)
+
+    def __init__(self, prompt, reference_video_path, prompt_language):
+        super().__init__()
+        self.prompt = prompt
+        self.reference_video_path = reference_video_path
+        self.prompt_language = prompt_language
+
+    def run(self):
+        handler = SignallingLogHandler(self.log_signal)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+
+        logger = logging.getLogger("VeoClient")
+        logger.addHandler(handler)
+
+        try:
+            client = VeoClient()
+            analysis = client.analyze_reference_video(
+                reference_video_path=self.reference_video_path,
+                user_prompt=self.prompt,
+                prompt_language=self.prompt_language,
+            )
+            self.finished_signal.emit({"analysis": analysis, "final_prompt": (analysis or {}).get("veo_prompt")})
         except Exception as e:
             self.error_signal.emit(str(e))
         finally:
@@ -93,6 +141,19 @@ class VeoStudioWindow(QMainWindow):
         prompt_layout.addWidget(self.prompt_edit)
         prompt_group.setLayout(prompt_layout)
         left_layout.addWidget(prompt_group, 2)
+
+        # Reference Video Group
+        ref_group = QGroupBox("Reference Video (Optional)")
+        ref_layout = QHBoxLayout()
+        self.ref_video_edit = QLineEdit()
+        self.ref_video_edit.setReadOnly(True)
+        self.ref_video_edit.setPlaceholderText("Select a reference video file (mp4/mov)...")
+        ref_layout.addWidget(self.ref_video_edit, 1)
+        self.ref_video_btn = QPushButton("Browse")
+        self.ref_video_btn.clicked.connect(self.choose_reference_video)
+        ref_layout.addWidget(self.ref_video_btn)
+        ref_group.setLayout(ref_layout)
+        left_layout.addWidget(ref_group)
         
         # Model Selection Group
         model_group = QGroupBox("Model Selection")
@@ -103,6 +164,16 @@ class VeoStudioWindow(QMainWindow):
         model_layout.addWidget(self.model_combo)
         model_group.setLayout(model_layout)
         left_layout.addWidget(model_group)
+
+        # Prompt Language Group
+        lang_group = QGroupBox("Prompt Language")
+        lang_layout = QVBoxLayout()
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItem("中文", "zh")
+        self.lang_combo.addItem("English", "en")
+        lang_layout.addWidget(self.lang_combo)
+        lang_group.setLayout(lang_layout)
+        left_layout.addWidget(lang_group)
         
         # Negative Prompt Group
         neg_prompt_group = QGroupBox("Negative Prompt")
@@ -147,6 +218,12 @@ class VeoStudioWindow(QMainWindow):
         
         config_group.setLayout(config_layout)
         left_layout.addWidget(config_group)
+
+        self.analyze_btn = QPushButton("Analyze Video")
+        self.analyze_btn.setMinimumHeight(40)
+        self.analyze_btn.setStyleSheet("background-color: #2196F3; color: white; font-weight: bold; font-size: 14px;")
+        self.analyze_btn.clicked.connect(self.start_analysis)
+        left_layout.addWidget(self.analyze_btn)
         
         # Generate Button
         self.generate_btn = QPushButton("Generate Video")
@@ -170,6 +247,13 @@ class VeoStudioWindow(QMainWindow):
         log_layout.addWidget(self.log_browser)
         log_group.setLayout(log_layout)
         right_layout.addWidget(log_group)
+
+        meta_group = QGroupBox("Generated Copywriting")
+        meta_layout = QVBoxLayout()
+        self.meta_browser = QTextBrowser()
+        meta_layout.addWidget(self.meta_browser)
+        meta_group.setLayout(meta_layout)
+        right_layout.addWidget(meta_group)
 
         # Check API Key on startup
         self.check_config()
@@ -222,6 +306,7 @@ class VeoStudioWindow(QMainWindow):
 
         # Disable UI
         self.generate_btn.setEnabled(False)
+        self.analyze_btn.setEnabled(False)
         self.progress_bar.setRange(0, 0) # Indeterminate mode
         
         # Get Params
@@ -229,23 +314,97 @@ class VeoStudioWindow(QMainWindow):
         person_generation = self.pg_combo.currentText()
         negative_prompt = self.neg_prompt_edit.text().strip() or None
         seed = self.seed_spin.value() if self.use_seed_cb.isChecked() else None
+        reference_video_path = self.ref_video_edit.text().strip() or None
+        prompt_language = self.lang_combo.currentData() or "zh"
         
         # Start Worker
-        self.worker = GenerationWorker(prompt, aspect_ratio, person_generation, negative_prompt, seed)
+        self.worker = GenerationWorker(prompt, reference_video_path, prompt_language, aspect_ratio, person_generation, negative_prompt, seed)
         self.worker.log_signal.connect(self.log_message)
         self.worker.finished_signal.connect(self.on_generation_finished)
         self.worker.error_signal.connect(self.on_generation_error)
         self.worker.start()
 
-    def on_generation_finished(self, result_path):
+    def start_analysis(self):
+        reference_video_path = self.ref_video_edit.text().strip() or None
+        if not reference_video_path:
+            QMessageBox.warning(self, "Input Error", "Please select a reference video.")
+            return
+
+        prompt = self.prompt_edit.toPlainText().strip()
+        prompt_language = self.lang_combo.currentData() or "zh"
+
+        self.generate_btn.setEnabled(False)
+        self.analyze_btn.setEnabled(False)
+        self.progress_bar.setRange(0, 0)
+
+        self.analysis_worker = AnalysisWorker(prompt, reference_video_path, prompt_language)
+        self.analysis_worker.log_signal.connect(self.log_message)
+        self.analysis_worker.finished_signal.connect(self.on_analysis_finished)
+        self.analysis_worker.error_signal.connect(self.on_generation_error)
+        self.analysis_worker.start()
+
+    def choose_reference_video(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Reference Video",
+            "",
+            "Video Files (*.mp4 *.mov *.m4v *.avi *.mkv);;All Files (*)",
+        )
+        if file_path:
+            self.ref_video_edit.setText(file_path)
+
+    def _render_metadata(self, result):
+        analysis = (result or {}).get("analysis") or {}
+        douyin = analysis.get("douyin") or {}
+
+        title = douyin.get("title") or ""
+        description = douyin.get("description") or ""
+        tags = douyin.get("tags") or []
+        final_prompt = (result or {}).get("final_prompt") or ""
+        style_notes = analysis.get("style_notes") or ""
+
+        lines = []
+        if title:
+            lines.append(f"Title: {title}")
+        if description:
+            lines.append(f"Description: {description}")
+        if tags:
+            lines.append(f"Tags: {', '.join([str(t) for t in tags])}")
+        if style_notes:
+            lines.append(f"Style Notes: {style_notes}")
+        if final_prompt:
+            lines.append(f"Final Prompt: {final_prompt}")
+
+        self.meta_browser.setPlainText("\n\n".join(lines) if lines else "")
+
+    def on_generation_finished(self, result):
         self.generate_btn.setEnabled(True)
+        self.analyze_btn.setEnabled(True)
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(100)
+
+        if isinstance(result, dict):
+            result_path = result.get("video_path")
+            self._render_metadata(result)
+        else:
+            result_path = str(result)
+
         self.log_message(f"SUCCESS: Video generated at {result_path}")
         QMessageBox.information(self, "Success", f"Video generated successfully!\nSaved to: {result_path}")
 
+    def on_analysis_finished(self, result):
+        self.generate_btn.setEnabled(True)
+        self.analyze_btn.setEnabled(True)
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(100)
+
+        if isinstance(result, dict):
+            self._render_metadata(result)
+        self.log_message("SUCCESS: Analysis completed.")
+
     def on_generation_error(self, error_msg):
         self.generate_btn.setEnabled(True)
+        self.analyze_btn.setEnabled(True)
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
         self.log_message(f"ERROR: {error_msg}")
