@@ -126,7 +126,7 @@ Google provides multiple Veo video generation models. **You can now switch betwe
 Run the graphical user interface:
 
 ```bash
-python3 run_gui.py
+python3 gui.py
 ```
 
 1.  Select the desired model from the **Model Selection** dropdown.
@@ -141,7 +141,7 @@ python3 run_gui.py
 
 ## Project Structure
 
-- `run_gui.py`: Launch script for the GUI application.
+- `gui.py`: Launch script for the GUI application.
 - `main.py`: Command-line interface entry point.
 - `app/`: Source code directory.
     - `gui.py`: Main GUI window implementation.

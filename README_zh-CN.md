@@ -126,7 +126,7 @@ Google 提供了多种 Veo 视频生成模型。**现在你可以在 GUI 界面�
 运行图形用户界面:
 
 ```bash
-python3 run_gui.py
+python3 gui.py
 ```
 
 1.  从 **Model Selection** (模型选择) 下拉框中选择想要使用的模型。
@@ -141,7 +141,7 @@ python3 run_gui.py
 
 ## 项目结构
 
-- `run_gui.py`: GUI 应用程序启动脚本。
+- `gui.py`: GUI 应用程序启动脚本。
 - `main.py`: 命令行接口入口。
 - `app/`: 源代码目录。
     - `gui.py`: GUI 主窗口实现。
