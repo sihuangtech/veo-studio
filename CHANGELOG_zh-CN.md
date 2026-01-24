@@ -1,0 +1,40 @@
+# 变更日志
+
+本项目的所有重要变更都将记录在此文件中。
+
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
+并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/) 规范。
+
+## [未发布]
+
+### 变更
+- 将 `run_gui.py` 重命名为 `gui.py` 以保持一致性
+- 移除 `config.example.json` 文件
+
+## [1.1.0] - 2025-12-22
+
+### 新增
+- 支持自定义 Google GenAI API 基础 URL 配置
+- 可在 `config.json` 中配置 API 端点
+
+### 文档
+- 更新模型选择说明，反映 GUI 下拉菜单和 `config.json` 的使用方式
+
+## [1.0.0] - 2025-12-13
+
+### 新增
+- 初始化 Google Veo 视频生成项目
+- 视频生成图形用户界面 (GUI)
+- 命令行界面 (CLI) 支持
+- Google GenAI API 集成支持
+- 通过 `config.json` 进行配置管理
+- GUI 中的模型选择下拉菜单
+- 提示词和负向提示词输入字段
+- 宽高比和人物生成设置
+- 基于种子的可复现生成
+- 视频输出管理
+
+### 变更
+- 将项目重构为 `app` 包结构
+- 采用 `uv` 进行依赖管理
+- 更新文档和核心逻辑文件
