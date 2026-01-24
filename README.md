@@ -8,6 +8,7 @@ A modern desktop GUI application for generating videos using Google's Veo 3.1 mo
 
 - **GUI Interface**: User-friendly desktop interface, no command line required.
 - **Veo 3.1 Support**: Utilizes Google's latest video generation model.
+- **Reference Video Analysis**: Analyze existing videos to generate optimized prompts for similar video generation.
 - **Customizable Parameters**:
     - Prompt & Negative Prompt
     - Aspect Ratio (16:9, 9:16)
@@ -129,15 +130,28 @@ Run the graphical user interface:
 python3 gui.py
 ```
 
+### Standard Video Generation
+
 1.  Select the desired model from the **Model Selection** dropdown.
 2.  Enter your video description in the **Prompt** box.
-2.  (Optional) Enter a **Negative Prompt** to specify what to avoid.
-3.  Adjust **Aspect Ratio** and **Person Generation** settings as needed.
-4.  (Optional) Check **Use Seed** and set a number for reproducible generation.
-5.  Click **Generate Video**.
-6.  Wait for the process to complete. The log panel on the right will show status updates.
-7.  Once finished, the video location will be displayed, and a success message will appear.
-8.  Generated videos are saved in the `output` directory within the project folder.
+3.  (Optional) Enter a **Negative Prompt** to specify what to avoid.
+4.  Adjust **Aspect Ratio** and **Person Generation** settings as needed.
+5.  (Optional) Check **Use Seed** and set a number for reproducible generation.
+6.  Click **Generate Video**.
+7.  Wait for the process to complete. The log panel on the right will show status updates.
+8.  Once finished, the video location will be displayed, and a success message will appear.
+9.  Generated videos are saved in the `output` directory within the project folder.
+
+### Reference Video Analysis (Optional)
+
+If you have an existing video and want to generate a similar video:
+
+1.  Click **Browse** in the **Reference Video** section and select your video file (mp4/mov).
+2.  (Optional) Enter a brief description in the **Prompt** box to guide the analysis.
+3.  Click **Analyze Video** to analyze the reference video and generate an optimized prompt.
+4.  The analysis result will be displayed in the log panel.
+5.  Adjust other settings (aspect ratio, seed, etc.) as needed.
+6.  Click **Generate Video** to create a video based on the reference.
 
 ## Project Structure
 
@@ -148,8 +162,8 @@ python3 gui.py
     - `veo_client.py`: Core logic for interacting with the Google GenAI API.
     - `config.py`: Configuration management.
     - `utils.py`: Utility functions.
+    - `prompts/`: Prompt templates for video analysis.
 - `config.json`: Stores user preferences (e.g., selected model).
-- `config.example.json`: Template for configuration.
 - `.env`: Configuration file for API keys.
 - `pyproject.toml`: Project metadata and dependencies (for uv).
 - `uv.toml`: UV configuration with Tsinghua mirror settings.
