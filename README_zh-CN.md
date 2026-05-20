@@ -2,12 +2,13 @@
 
 [English](README.md)
 
-一个基于 Google Veo 3.1 模型（通过 Gemini API）的现代化桌面视频生成应用。使用 Python 和 PySide6 构建。
+一个基于 Google Veo / Gemini API 的现代化视频生成应用，提供命令行、PySide6 桌面 GUI 和 Gradio 网页 UI。
 
 ## 功能特性
 
-- **GUI 图形界面**: 友好的桌面操作界面，无需使用命令行。
-- **支持 Veo 3.1**: 使用 Google 最新的视频生成模型。
+- **多种界面**: 支持命令行、桌面 GUI 和本地网页 UI。
+- **支持多种 Veo 模型**: 内置当前可用的 Veo 视频生成模型，明确弃用的模型不会放入默认列表。
+- **网页端认证输入**: Web UI 可以选择 AI Studio API Key 或 Enterprise Service Account，不必手动修改 `.env`。
 - **参考视频分析**: 分析现有视频，生成优化的提示词用于生成类似视频。
 - **可自定义参数**:
   - 提示词 (Prompt) & 负向提示词 (Negative Prompt)
@@ -21,7 +22,7 @@
 
 - Python 3.10 或更高版本
 - 启用了 Vertex AI / Gemini API 的 Google Cloud 项目
-- Google Cloud API Key
+- Google AI Studio API Key，或 Google Cloud Service Account
 
 ## 安装指南
 
@@ -93,9 +94,27 @@
     cp .env.example .env
     ```
 
-2. 打开 `.env` 文件，将 `your_api_key_here` 替换为你真实的 Google Cloud API Key。
+2. 选择认证方式。
 
-    *注意: 程序启动时会检查此文件，如果文件缺失或配置了占位符，会发出警告。*
+    **Google AI Studio API Key（个人开发最常用）**
+
+    ```bash
+    GOOGLE_AUTH_MODE=ai_studio
+    GOOGLE_API_KEY=your_api_key_here
+    ```
+
+    **Gemini Enterprise / Google Cloud Service Account（企业级）**
+
+    ```bash
+    GOOGLE_AUTH_MODE=enterprise
+    GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+    GOOGLE_CLOUD_LOCATION=us-central1
+    GOOGLE_SERVICE_ACCOUNT_FILE=C:\path\to\service-account.json
+    ```
+
+    `GOOGLE_SERVICE_ACCOUNT_FILE` 可以省略；如果你的环境已经配置了 Google Application Default Credentials，SDK 会尝试使用默认凭据。Web UI 也支持在页面里选择认证方式并上传 Service Account JSON。
+
+    *注意: 程序启动时会检查对应认证配置，如果缺失或配置了占位符，会发出警告。*
 
 3. **设置网络代理 (中国大陆用户推荐)**:
     如果你在中国大陆无法访问 Google 服务，请在 `.env` 文件中取消 `HTTPS_PROXY` 的注释并设置你的代理地址：
@@ -111,26 +130,44 @@
     GOOGLE_GENAI_BASE_URL=https://your-proxy.example.com
     ```
 
-## 视频模型选择
+## 模型选择
 
-Google 提供了多种 Veo 视频生成模型。**现在你可以在 GUI 界面中直接切换模型。**
+Google 提供了多种 Veo 视频生成模型。你可以在桌面 GUI 或 Web UI 中直接切换模型。默认列表只放当前可用模型；如果官方明确标记某个模型已弃用或停用，就不要再写入配置文件。
 
 1. 在左侧面板找到 **Model Selection** (模型选择) 下拉框。
 2. 选择你想要使用的模型。
 3. 选择会自动保存到 `config.json` 文件中。
 
-| 模型名称 | 版本 | 描述 |
+### Veo 视频模型
+
+| 模型名称 | 类型 | 描述 |
 | :--- | :--- | :--- |
-| `veo-3.1-generate-preview` | Veo 3 | 2025年10月15日发布，生成 720p 或 1080p 分辨率视频，支持 24 或 30 fps。 |
-| `veo-3.1-fast-generate-preview` | Veo 3 | 2025年10月15日发布，生成 720p 或 1080p 分辨率视频，支持 24 或 30 fps。优化了生成速度，适用于快速迭代。 |
-| `veo-3.0-generate-001` | Veo 3 | 2025年5月发布。已于2025年11月停用，被 Veo 3.1 取代。 |
-| `veo-3.0-fast-generate-001` | Veo 3 | 2025年5月发布。已于2025年11月停用，被 Veo 3.1 取代。 |
-| `veo-2.0-generate-001` | Veo 2 | 2024年12月发布，生成 1080p 分辨率视频，支持 24 或 30 fps。 |
+| `veo-3.1-generate-preview` | Veo 3.1 | 高质量视频生成，支持原生音频和更强控制能力。 |
+| `veo-3.1-fast-generate-preview` | Veo 3.1 | Veo 3.1 快速版本，适合更快迭代。 |
+| `veo-3.1-lite-generate-preview` | Veo 3.1 | 更低成本的 Veo 3.1 版本，适合高频生成。 |
+| `veo-3.0-generate-001` | Veo 3.0 | 通用 Veo 3 视频生成模型，支持音频。 |
+| `veo-3.0-fast-generate-001` | Veo 3.0 | 更快的 Veo 3 视频生成模型，支持音频。 |
+| `veo-2.0-generate-001` | Veo 2.0 | 早期 Veo 视频生成模型，不支持原生音频。 |
+
+### Gemini 参考视频分析模型
+
+这些模型只用于“参考视频分析、提示词改写和文案生成”，不用于直接生成视频。
+
+| 模型名称 | 描述 |
+| :--- | :--- |
+| `gemini-3.5-flash` | 稳定、快速的文本/多模态分析模型。 |
+| `gemini-3.1-pro-preview` | 预览版高级推理和复杂多模态分析模型。 |
+| `gemini-3-flash-preview` | 默认参考视频分析模型。 |
+| `gemini-3.1-flash-lite` | 低延迟、低成本的轻量分析模型。 |
+| `gemini-3.1-flash-lite-preview` | 预览版轻量分析模型。 |
+| `gemini-2.5-pro` | 稳定复杂分析和推理模型。 |
+| `gemini-2.5-flash` | 稳定低延迟多模态分析模型。 |
+| `gemini-2.5-flash-lite` | 稳定低成本轻量模型。 |
 
 *注意：*
 
-- *所有模型生成的视频长度为 8 秒（部分早期 Veo 2 变体可能为 6 秒，但 API 统一返回整数时长）。*
-- *Veo 3 系列模型支持原生音频生成和更高的真实感。*
+- *不同模型支持的分辨率、时长、音频和价格可能不同，请以官方文档和你的账号权限为准。*
+- *Veo 3 系列支持原生音频生成，Veo 2 不支持原生音频。*
 - *请确保你的 Google Cloud 账号已获准访问对应的预览版模型。*
 - *更多官方文档与模型详情，请参考：[Google Gemini API Video Docs](https://ai.google.dev/gemini-api/docs/video)*
 
@@ -140,6 +177,20 @@ Google 提供了多种 Veo 视频生成模型。**现在你可以在 GUI 界面�
 
 ```bash
 python3 gui.py
+```
+
+运行网页用户界面:
+
+```bash
+python3 web.py
+```
+
+启动后打开 `http://127.0.0.1:7860`。网页版本支持在页面中选择认证方式、填写 Google AI Studio API Key 或上传 Service Account JSON，并选择 Veo 视频模型和 Gemini 参考视频分析模型；页面中填写的认证信息只用于本次请求，不会写入 `.env`。
+
+网页 UI 使用 Gradio 构建。如果使用 uv 安装依赖，运行：
+
+```bash
+uv sync
 ```
 
 ### 标准视频生成
@@ -182,7 +233,7 @@ python3 gui.py
 
 ## 故障排除
 
-- **API Key 错误**: 确保你的 API Key 有效，并且在 Google Cloud Console 中有权访问 Veo 模型。
+- **认证错误**: 如果使用 AI Studio，确保 API Key 有效并有权访问 Veo 模型；如果使用 Enterprise / Service Account，确保项目 ID、区域、服务账号权限和凭据文件正确。
 - **配额限制**: 视频生成模型通常有严格的配额限制。如果生成反复失败，请检查你的 Google Cloud 配额。
 - **日志**: 查看应用程序中的 "Console Output" (控制台输出) 面板以获取详细的错误信息。
 

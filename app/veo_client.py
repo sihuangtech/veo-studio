@@ -4,34 +4,107 @@ import re
 import shutil
 import tempfile
 import time
+from datetime import datetime
 from google import genai
 from google.genai import types
+from google.oauth2 import service_account
 from .config import Config
 from .utils import setup_logger
 
 logger = setup_logger("VeoClient")
 
 class VeoClient:
-    def __init__(self):
+    def __init__(
+        self,
+        api_key=None,
+        base_url=None,
+        https_proxy=None,
+        text_model=None,
+        auth_mode=None,
+        service_account_file=None,
+        project=None,
+        location=None,
+    ):
         try:
-            if Config.HTTPS_PROXY:
-                logger.info(f"Using proxy: {Config.HTTPS_PROXY}")
-                # Ensure it's set in os.environ for underlying libraries
-                os.environ["HTTPS_PROXY"] = Config.HTTPS_PROXY
-                os.environ["HTTP_PROXY"] = Config.HTTPS_PROXY
+            effective_auth_mode = self._normalize_auth_mode(auth_mode or Config.get_auth_mode())
+            effective_proxy = https_proxy or Config.HTTPS_PROXY
+            effective_base_url = base_url or Config.GOOGLE_GENAI_BASE_URL
+            self.text_model = text_model or Config.get_current_text_model()
 
-            client_kwargs = {"api_key": Config.GOOGLE_API_KEY}
-            if Config.GOOGLE_GENAI_BASE_URL:
-                base_url = Config.GOOGLE_GENAI_BASE_URL.strip()
-                logger.info(f"Using custom GenAI base URL: {base_url}")
-                client_kwargs["http_options"] = types.HttpOptions(base_url=base_url)
+            if effective_proxy:
+                logger.info(f"Using proxy: {effective_proxy}")
+                # 中文注释：代理写入环境变量，供 google-genai 底层 HTTP 客户端读取。
+                os.environ["HTTPS_PROXY"] = effective_proxy
+                os.environ["HTTP_PROXY"] = effective_proxy
+
+            client_kwargs = self._build_client_kwargs(
+                auth_mode=effective_auth_mode,
+                api_key=api_key,
+                service_account_file=service_account_file,
+                project=project,
+                location=location,
+            )
+            if effective_base_url:
+                normalized_base_url = effective_base_url.strip()
+                logger.info(f"Using custom GenAI base URL: {normalized_base_url}")
+                client_kwargs["http_options"] = types.HttpOptions(base_url=normalized_base_url)
 
             self.client = genai.Client(**client_kwargs)
             current_model = Config.get_current_model()
-            logger.info(f"Initialized VeoClient with model: {current_model}")
+            logger.info(
+                f"Initialized VeoClient with auth mode: {effective_auth_mode}, "
+                f"model: {current_model}, text model: {self.text_model}"
+            )
         except Exception as e:
             logger.error(f"Failed to initialize VeoClient: {e}")
             raise
+
+    @staticmethod
+    def _normalize_auth_mode(auth_mode):
+        auth_mode = (auth_mode or "ai_studio").strip().lower().replace("-", "_")
+        if auth_mode in ("google_ai_studio", "aistudio", "api_key"):
+            return "ai_studio"
+        if auth_mode in ("enterprise", "vertex", "vertexai", "service_account"):
+            return "enterprise"
+        raise ValueError("auth_mode must be ai_studio or enterprise")
+
+    @staticmethod
+    def _load_service_account_credentials(service_account_file):
+        if not service_account_file:
+            return None
+        if not os.path.exists(service_account_file):
+            raise FileNotFoundError(service_account_file)
+        # 中文注释：Service Account 走 OAuth scope，适合企业/云项目权限控制。
+        return service_account.Credentials.from_service_account_file(
+            service_account_file,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+
+    def _build_client_kwargs(self, auth_mode, api_key=None, service_account_file=None, project=None, location=None):
+        if auth_mode == "ai_studio":
+            effective_api_key = api_key or Config.GOOGLE_API_KEY
+            if not effective_api_key:
+                raise ValueError("Google AI Studio API Key is required")
+            return {"api_key": effective_api_key}
+
+        effective_project = project or Config.GOOGLE_CLOUD_PROJECT
+        effective_location = location or Config.GOOGLE_CLOUD_LOCATION
+        effective_service_account_file = service_account_file or Config.GOOGLE_SERVICE_ACCOUNT_FILE
+
+        if not effective_project:
+            raise ValueError("Google Cloud project is required for enterprise authentication")
+        if not effective_location:
+            raise ValueError("Google Cloud location is required for enterprise authentication")
+
+        client_kwargs = {
+            "enterprise": True,
+            "project": effective_project,
+            "location": effective_location,
+        }
+        credentials = self._load_service_account_credentials(effective_service_account_file)
+        if credentials:
+            client_kwargs["credentials"] = credentials
+        return client_kwargs
 
     def _load_prompt_template(self, relative_path):
         base_dir = os.path.dirname(__file__)
@@ -55,6 +128,12 @@ class VeoClient:
             return json.loads(obj_match.group(1))
 
         raise ValueError("Failed to parse JSON from model response")
+
+    def _build_output_filename(self):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        output_dir = os.path.join(Config.BASE_DIR, "output")
+        os.makedirs(output_dir, exist_ok=True)
+        return os.path.join(output_dir, f"generated_video_{timestamp}.mp4")
 
     def analyze_reference_video(self, reference_video_path, user_prompt=None, prompt_language="zh"):
         if not reference_video_path:
@@ -98,7 +177,7 @@ class VeoClient:
         finally:
             if temp_dir:
                 shutil.rmtree(temp_dir, ignore_errors=True)
-        model = Config.GEMINI_TEXT_MODEL
+        model = self.text_model
 
         if (prompt_language or "").lower().startswith("en"):
             template_path = "prompts/reference_video_analysis_en.txt"
@@ -125,6 +204,7 @@ class VeoClient:
         person_generation="allow_adult",
         negative_prompt=None,
         seed=None,
+        model_name=None,
     ):
         analysis = self.analyze_reference_video(reference_video_path, user_prompt=user_prompt, prompt_language=prompt_language)
         veo_prompt = analysis.get("veo_prompt")
@@ -138,6 +218,7 @@ class VeoClient:
             person_generation=person_generation,
             negative_prompt=negative_prompt,
             seed=seed,
+            model_name=model_name,
         )
 
         return {
@@ -146,7 +227,15 @@ class VeoClient:
             "final_prompt": final_prompt,
         }
 
-    def generate_video(self, prompt, aspect_ratio="16:9", person_generation="allow_adult", negative_prompt=None, seed=None):
+    def generate_video(
+        self,
+        prompt,
+        aspect_ratio="16:9",
+        person_generation="allow_adult",
+        negative_prompt=None,
+        seed=None,
+        model_name=None,
+    ):
         """
         Generates a video using the Veo model.
         
@@ -183,7 +272,7 @@ class VeoClient:
             config = types.GenerateVideosConfig(**config_params)
             
             # Initiate generation
-            current_model = Config.get_current_model() # Get latest selection
+            current_model = model_name or Config.get_current_model() # Get latest selection
             operation = self.client.models.generate_videos(
                 model=current_model,
                 prompt=prompt,
@@ -210,32 +299,25 @@ class VeoClient:
                         raise e
                     time.sleep(2) # Wait a bit before retrying
                 
-            if operation.result:
-                generated_videos = operation.response.generated_videos
-                if not generated_videos:
-                    logger.warning("No videos were generated.")
-                    return None
-                
-                # Save the first video
-                video_file = generated_videos[0]
-                timestamp = int(time.time())
-                
-                # Ensure output directory exists
-                output_dir = "output"
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
-                    
-                filename = os.path.join(output_dir, f"generated_video_{timestamp}.mp4")
-                
-                logger.info(f"Downloading video to {filename}...")
-                self.client.files.download(file=video_file.video)
-                video_file.video.save(filename)
-                
-                logger.info(f"Video saved successfully: {filename}")
-                return filename
-            else:
-                logger.error("Operation completed but no result found.")
+            operation_error = getattr(operation, "error", None)
+            if operation_error:
+                raise RuntimeError(f"Video generation failed: {operation_error}")
+
+            response = getattr(operation, "response", None)
+            generated_videos = getattr(response, "generated_videos", None) if response else None
+            if not generated_videos:
+                logger.warning("Operation completed but no generated videos were returned.")
                 return None
+
+            video_file = generated_videos[0]
+            filename = self._build_output_filename()
+
+            logger.info(f"Downloading video to {filename}...")
+            self.client.files.download(file=video_file.video)
+            video_file.video.save(filename)
+
+            logger.info(f"Video saved successfully: {filename}")
+            return filename
                 
         except Exception as e:
             logger.error(f"An error occurred during video generation: {e}")

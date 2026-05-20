@@ -201,6 +201,8 @@ class VeoStudioWindow(QMainWindow):
         pg_layout.addWidget(QLabel("Person Generation:"))
         self.pg_combo = QComboBox()
         self.pg_combo.addItems(["allow_adult", "dont_allow"])
+        self.pg_combo.setEnabled(False)
+        self.pg_combo.setToolTip("The current Veo 3.1 preview API does not support this parameter.")
         pg_layout.addWidget(self.pg_combo)
         config_layout.addLayout(pg_layout)
         
@@ -276,6 +278,7 @@ class VeoStudioWindow(QMainWindow):
         """Load models from config into the combobox."""
         models = Config.get_models()
         current_model_id = Config.get_current_model()
+        selected_index = -1
         
         self.model_combo.clear()
         for i, model in enumerate(models):
@@ -288,7 +291,16 @@ class VeoStudioWindow(QMainWindow):
             
             # Select if it's the current model
             if model['id'] == current_model_id:
-                self.model_combo.setCurrentIndex(i)
+                selected_index = i
+
+        if selected_index < 0:
+            self.model_combo.addItem(f"Configured Model ({current_model_id})", current_model_id)
+            selected_index = self.model_combo.count() - 1
+
+        self.model_combo.setCurrentIndex(selected_index)
+        if Config.VEO_MODEL_NAME:
+            self.model_combo.setEnabled(False)
+            self.model_combo.setToolTip("VEO_MODEL_NAME is set in .env and overrides GUI model selection.")
 
     def on_model_changed(self, index):
         """Update config when model selection changes."""

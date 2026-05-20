@@ -4,27 +4,75 @@
         {
             "id": "veo-3.1-generate-preview",
             "name": "Veo 3.1 (Preview)",
-            "description": "Released Oct 15, 2025. 720p/1080p, 24/30fps. High fidelity."
+            "description": "High-fidelity video generation with native audio and advanced controls."
         },
         {
             "id": "veo-3.1-fast-generate-preview",
             "name": "Veo 3.1 Fast (Preview)",
-            "description": "Released Oct 15, 2025. Optimized for speed and rapid iteration."
+            "description": "Veo 3.1 variant optimized for faster iteration."
+        },
+        {
+            "id": "veo-3.1-lite-generate-preview",
+            "name": "Veo 3.1 Lite (Preview)",
+            "description": "Lower-cost Veo 3.1 variant for high-volume video workflows."
         },
         {
             "id": "veo-3.0-generate-001",
             "name": "Veo 3.0",
-            "description": "Released May 2025. Shut down in Nov 2025."
+            "description": "General Veo 3 model for text/image to video generation with audio."
         },
         {
             "id": "veo-3.0-fast-generate-001",
             "name": "Veo 3.0 Fast",
-            "description": "Released May 2025. Shut down in Nov 2025."
+            "description": "Faster Veo 3 variant for lower-latency video generation with audio."
         },
         {
             "id": "veo-2.0-generate-001",
             "name": "Veo 2.0",
-            "description": "Released Dec 2024. 1080p, 24/30fps."
+            "description": "Earlier Veo model for video generation without native audio."
+        }
+    ],
+    "current_text_model": "gemini-3-flash-preview",
+    "text_models": [
+        {
+            "id": "gemini-3.5-flash",
+            "name": "Gemini 3.5 Flash",
+            "description": "Stable text model for fast, high-quality analysis and prompt rewriting."
+        },
+        {
+            "id": "gemini-3.1-pro-preview",
+            "name": "Gemini 3.1 Pro Preview",
+            "description": "Preview model for advanced reasoning and complex multimodal analysis."
+        },
+        {
+            "id": "gemini-3-flash-preview",
+            "name": "Gemini 3 Flash Preview",
+            "description": "Preview multimodal text model; default for reference video analysis."
+        },
+        {
+            "id": "gemini-3.1-flash-lite",
+            "name": "Gemini 3.1 Flash-Lite",
+            "description": "Stable low-latency, lower-cost model for simple analysis tasks."
+        },
+        {
+            "id": "gemini-3.1-flash-lite-preview",
+            "name": "Gemini 3.1 Flash-Lite Preview",
+            "description": "Preview low-cost model for lightweight, high-frequency tasks."
+        },
+        {
+            "id": "gemini-2.5-pro",
+            "name": "Gemini 2.5 Pro",
+            "description": "Stable 2.5 Pro model for complex analysis and reasoning."
+        },
+        {
+            "id": "gemini-2.5-flash",
+            "name": "Gemini 2.5 Flash",
+            "description": "Stable 2.5 Flash model for low-latency multimodal analysis."
+        },
+        {
+            "id": "gemini-2.5-flash-lite",
+            "name": "Gemini 2.5 Flash-Lite",
+            "description": "Stable cost-efficient 2.5 model for lightweight tasks."
         }
     ]
 }
