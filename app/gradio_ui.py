@@ -8,7 +8,14 @@ from .web_service import WebGenerationService
 
 SERVICE = WebGenerationService()
 APP_CSS = """
-.gradio-container { max-width: 1180px !important; margin: 0 auto; }
+.gradio-container,
+.gradio-container .contain,
+.gradio-container main {
+    width: 96vw !important;
+    max-width: 1680px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
 textarea, input, select { border-radius: 7px !important; }
 """
 
@@ -112,7 +119,7 @@ def build_app():
         else "Google AI Studio / API Key"
     )
 
-    with gr.Blocks(title="Veo Studio Web") as demo:
+    with gr.Blocks(title="Veo Studio Web", fill_width=True) as demo:
         gr.Markdown("# Veo Studio Web\n本地网页版本，认证信息只用于本次生成，不会写入 `.env`；留空则使用 `.env` 中的对应配置。")
 
         with gr.Row(equal_height=True):
