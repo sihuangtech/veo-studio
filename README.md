@@ -248,3 +248,7 @@ Maintained by **SK Studio**.
 - **Website**: [www.skstudio.cn](https://www.skstudio.cn)
 - **Email**: [contact@skstudio.cn](mailto:contact@skstudio.cn)
 - **QQ Group**: [Join Chat](https://qm.qq.com/q/KUCcyyYtyi)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=sihuangtech/veo-studio&type=Date)](https://star-history.com/#sihuangtech/veo-studio&Date)

@@ -248,3 +248,7 @@ uv sync
 - **官网**: [www.skstudio.cn](https://www.skstudio.cn)
 - **邮箱**: [contact@skstudio.cn](mailto:contact@skstudio.cn)
 - **彩旗开源交流群**: [点击加入群聊](https://qm.qq.com/q/KUCcyyYtyi)
+
+## 星标历史
+
+[![Star History Chart](https://api.star-history.com/svg?repos=sihuangtech/veo-studio&type=Date)](https://star-history.com/#sihuangtech/veo-studio&Date)
